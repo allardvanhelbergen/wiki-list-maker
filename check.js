@@ -21,13 +21,15 @@ var scraper = new Scrapyard({
 });
 
 
-var q = async.queue(function(fn, next) {
+var scrapeQueue = async.queue(function(fn, next) {
   return fn(next);
 }, 10);
 
 
-q.drain = function() {
-  console.log(total, women, (women / total));
+scrapeQueue.drain = function() {
+  console.log('Total entries:', total);
+  console.log('Total women entries:', women);
+  console.log('Percentage women entries:', (women / total));
 };
 
 
@@ -35,11 +37,11 @@ scraper.scrape({
   url: URL,
   type: 'html',
   encoding: 'utf8',
-  merhod: 'GET',
+  method: 'GET',
 }, function(err, $) {
 
   if (err) {
-    return console.log(err);
+    return console.error(err);
   }
 
   $('li a[href^="/wiki"]:first-child', '#mw-content-text').each(function(idx, e) {
@@ -47,7 +49,7 @@ scraper.scrape({
 
     total++;
 
-    q.push(function(next) {
+    scrapeQueue.push(function(next) {
       scraper.scrape({
         url: checkUrl,
         type: 'html',
@@ -56,7 +58,7 @@ scraper.scrape({
       }, function(err, $) {
 
         if (/Category:Women/.test($('#catlinks').html())) {
-          console.log('yay:' + checkUrl);
+          console.log('Yay:', checkUrl);
           women++;
         }
 
