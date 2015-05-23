@@ -7,6 +7,7 @@ var url = require('url');
 
 
 var URL = 'http://en.wikipedia.org/wiki/List_of_computer_scientists';
+var OUTPUT_DIR = './output'
 var total = 0;
 var women = 0;
 
@@ -15,7 +16,7 @@ var scraper = new Scrapyard({
   debug: false,
   retries: 5,
   connections: 10,
-  cache: './storage',
+  cache: OUTPUT_DIR,
   bestbefore: '5min'
 });
 
