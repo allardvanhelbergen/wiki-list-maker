@@ -28,3 +28,4 @@ node_modules
 
 # Output from the script
 output/
+storage/
