@@ -1,7 +1,7 @@
 {
-  "name": "wiqualify",
+  "name": "wiki-list-maker",
   "version": "0.0.1",
-  "description": "",
+  "description": "A tool to autogenerate wiki lists.",
   "main": "test.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
@@ -9,6 +9,16 @@
   "author": "yetzt <node@yetzt.me> (https://yetzt.me/)",
   "license": "Public Domain",
   "dependencies": {
-    "scrapyard": "0.0.8"
-  }
+    "async": "^1.0.0",
+    "scrapyard": "0.0.8",
+    "url": "^0.10.3"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git@github.com:allardvanhelbergen/wiki-list-maker.git"
+  },
+  "bugs": {
+    "url": "https://github.com/allardvanhelbergen/wiki-list-maker/issues"
+  },
+  "homepage": "https://github.com/allardvanhelbergen/wiki-list-maker"
 }
