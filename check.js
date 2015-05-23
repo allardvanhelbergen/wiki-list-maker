@@ -4,13 +4,13 @@
 var async = require('async');
 var Scrapyard = require('scrapyard');
 var url = require('url');
-
+var fs = require ('fs');
 
 var URL = 'http://en.wikipedia.org/wiki/List_of_computer_scientists';
-var OUTPUT_DIR = './output'
+var OUTPUT_DIR = './output';
 var total = 0;
 var women = 0;
-
+var data = [];
 
 var scraper = new Scrapyard({
   debug: false,
@@ -28,6 +28,7 @@ var q = async.queue(function(fn, next) {
 
 q.drain = function() {
   console.log(total, women, (women / total));
+  fs.writeFileSync('List_of_results.json', JSON.stringify(data, null, '\t'));
 };
 
 
@@ -44,6 +45,7 @@ scraper.scrape({
 
   $('li a[href^="/wiki"]:first-child', '#mw-content-text').each(function(idx, e) {
     var checkUrl = url.resolve(URL, $(this).attr('href'));
+    var checkName = $(this).attr('title');
 
     total++;
 
@@ -56,8 +58,9 @@ scraper.scrape({
       }, function(err, $) {
 
         if (/Category:Women/.test($('#catlinks').html())) {
-          console.log('yay:' + checkUrl);
+          //console.log(checkUrl);
           women++;
+          data.push({Name:checkName, Url:checkUrl});
         }
 
         next();
