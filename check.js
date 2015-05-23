@@ -2,24 +2,42 @@
 
 
 var async = require('async');
+var fs = require ('fs');
+var minimist = require('minimist');
 var Scrapyard = require('scrapyard');
 var url = require('url');
-var fs = require ('fs');
 
-var URL = 'http://en.wikipedia.org/wiki/List_of_computer_scientists';
+
+var DEFAULT_URL = 'http://en.wikipedia.org/wiki/List_of_computer_scientists';
 var OUTPUT_DIR = './output';
 var CACHE_DIR = './storage';
 var total = 0;
 var women = 0;
 var data = [];
 
-var scraper = new Scrapyard({
-  debug: false,
-  retries: 5,
-  connections: 10,
-  cache: CACHE_DIR,
-  bestbefore: '5min'
-});
+
+var processArguments = function(argv) {
+  var settings = {};
+
+  argv = minimist(argv);
+  settings = {
+
+    isVerbose: argv.v || false,
+    rootUrl: argv.u || DEFAULT_URL
+  };
+
+  return settings;
+};
+
+
+var getScraperSettings = function(url) {
+  return {
+    url: url,
+    type: 'html',
+    encoding: 'utf8',
+    method: 'GET',
+  };
+};
 
 
 var scrapeQueue = async.queue(function(fn, next) {
@@ -28,46 +46,57 @@ var scrapeQueue = async.queue(function(fn, next) {
 
 
 scrapeQueue.drain = function() {
-  console.log('Total entries:', total);
-  console.log('Total women entries:', women);
-  console.log('Percentage women entries:', (women / total));
+  console.info('Total entries:', total);
+  console.info('Total women entries:', women);
+  console.info('Percentage women entries:', (women / total));
   fs.writeFileSync(OUTPUT_DIR + '/' + Date.now() + '.json', JSON.stringify(data, null, '\t'));
 };
 
 
-scraper.scrape({
-  url: URL,
-  type: 'html',
-  encoding: 'utf8',
-  method: 'GET',
-}, function(err, $) {
+var check = function() {
+  var settings = processArguments(process.argv.slice(2));
 
-  if (err) {
-    return console.error(err);
-  }
+  console.info('Checking:', settings.rootUrl);
 
-  $('li a[href^="/wiki"]:first-child', '#mw-content-text').each(function(idx, e) {
-    var checkUrl = url.resolve(URL, $(this).attr('href'));
-    var checkName = $(this).attr('title');
+  var scraper = new Scrapyard({
+    debug: false,
+    retries: 5,
+    connections: 10,
+    cache: CACHE_DIR,
+    bestbefore: '5min'
+  });
 
-    total++;
+  scraper.scrape(getScraperSettings(settings.rootUrl), function(err, $) {
 
-    scrapeQueue.push(function(next) {
-      scraper.scrape({
-        url: checkUrl,
-        type: 'html',
-        encoding: 'utf8',
-        method: 'GET',
-      }, function(err, $) {
+    if (err) {
+      return console.error(err);
+    }
 
-        if (/Category:Women/.test($('#catlinks').html())) {
-          console.log(checkUrl);
-          women++;
-          data.push({name: checkName, url: checkUrl});
-        }
+    $('li a[href^="/wiki"]:first-child', '#mw-content-text').each(function(idx, e) {
+      var checkUrl = url.resolve(settings.rootUrl, $(this).attr('href'));
+      var checkName = $(this).attr('title');
 
-        next();
+      total++;
+
+      scrapeQueue.push(function(next) {
+        scraper.scrape(getScraperSettings(checkUrl), function(err, $) {
+
+          if (/Category:Women/.test($('#catlinks').html())) {
+            if (settings.isVerbose) {
+              console.info('Found:', checkUrl);
+            }
+
+            women++;
+            data.push({name: checkName, url: checkUrl});
+          }
+
+          next();
+        });
       });
     });
   });
-});
+};
+
+
+// Run the Scraper.
+check();
