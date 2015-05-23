@@ -27,5 +27,5 @@ build/Release
 node_modules
 
 # Output from the script
-output/
+output/*.json
 storage/
